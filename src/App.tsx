@@ -14,7 +14,7 @@ import { Toaster } from './components/ui/toaster'
 interface Exercise {
   id: string
   user_id: string
-  exercise_name: string
+  exercise_name: string | null
   category: 'upper' | 'lower'
   reps: number
   sets: number
@@ -76,7 +76,7 @@ function App() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!formData.exercise_name || !formData.reps || !formData.sets || !formData.total_weight) {
+    if (!formData.exercise_name?.trim() || !formData.reps || !formData.sets || !formData.total_weight) {
       toast({
         title: "Error",
         description: "Please fill in all fields",
@@ -88,7 +88,7 @@ function App() {
     try {
       await blink.db.exercises.create({
         user_id: user!.id,
-        exercise_name: formData.exercise_name,
+        exercise_name: formData.exercise_name.trim(),
         category: activeTab,
         reps: parseInt(formData.reps),
         sets: parseInt(formData.sets),
@@ -115,14 +115,21 @@ function App() {
   }
 
   const getPreviousExercise = (exerciseName: string, category: 'upper' | 'lower') => {
+    if (!exerciseName || !exerciseName.trim()) return null
+    
     return exercises.find(ex => 
+      ex.exercise_name && 
       ex.exercise_name.toLowerCase() === exerciseName.toLowerCase() && 
       ex.category === category
     )
   }
 
   const getFilteredExercises = (category: 'upper' | 'lower') => {
-    return exercises.filter(ex => ex.category === category)
+    return exercises.filter(ex => 
+      ex.category === category && 
+      ex.exercise_name && 
+      ex.exercise_name.trim()
+    )
   }
 
   const formatDate = (dateString: string) => {
@@ -397,7 +404,7 @@ function WorkoutContent({
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <h4 className="font-semibold text-lg text-gray-900 mb-2">
-                        {exercise.exercise_name}
+                        {exercise.exercise_name || 'Unknown Exercise'}
                       </h4>
                       <div className="flex items-center gap-4 text-sm text-gray-600">
                         <Badge variant="secondary" className="bg-blue-100 text-blue-800">
